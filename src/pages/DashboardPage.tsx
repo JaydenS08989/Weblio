@@ -1,10 +1,13 @@
 import {
+  Copy,
   ExternalLink,
+  Eye,
   LayoutGrid,
   LogOut,
-  MoreHorizontal,
+  Pencil,
   Plus,
   Search,
+  Trash2,
 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
@@ -16,13 +19,26 @@ const DashboardPage: React.FC = () => {
   const projects = useEditorStore((state) => state.projects);
   const createProject = useEditorStore((state) => state.createProject);
   const openProject = useEditorStore((state) => state.openProject);
+  const renameProject = useEditorStore((state) => state.renameProject);
+  const duplicateProject = useEditorStore((state) => state.duplicateProject);
+  const deleteProject = useEditorStore((state) => state.deleteProject);
   const signOut = useAuthStore((state) => state.signOut);
+  const user = useAuthStore((state) => state.user);
   const [query, setQuery] = useState("");
   const visibleProjects = projects.filter((project) =>
     project.name.toLowerCase().includes(query.toLowerCase()),
   );
 
   const create = () => navigate(`/editor/${createProject()}`);
+  const formatUpdatedAt = (value: string) => {
+    const days = Math.floor(
+      (Date.now() - new Date(value).getTime()) / 86_400_000,
+    );
+    if (days <= 0) return "Edited today";
+    if (days === 1) return "Edited yesterday";
+    if (days < 30) return `Edited ${days} days ago`;
+    return `Edited ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value))}`;
+  };
 
   return (
     <div className="dashboard">
@@ -37,10 +53,16 @@ const DashboardPage: React.FC = () => {
           </button>
         </nav>
         <div className="user-area">
-          <div className="avatar">AM</div>
+          <div className="avatar">
+            {user?.name
+              .split(" ")
+              .map((part) => part[0])
+              .join("")
+              .slice(0, 2) ?? "WU"}
+          </div>
           <div>
-            <strong>Alex Morgan</strong>
-            <span>alex@northstar.design</span>
+            <strong>{user?.name ?? "Weblio user"}</strong>
+            <span>{user?.email ?? "Local demo session"}</span>
           </div>
           <button
             type="button"
@@ -115,16 +137,54 @@ const DashboardPage: React.FC = () => {
                   <h2>{project.name}</h2>
                   <p>
                     <span className={`status ${project.status}`} />
-                    {project.status} · Edited recently
+                    {project.status} · {formatUpdatedAt(project.updatedAt)}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`More actions for ${project.name}`}
-                >
-                  <MoreHorizontal />
-                </button>
+                <details className="project-actions">
+                  <summary
+                    className="icon-button"
+                    aria-label={`More actions for ${project.name}`}
+                  >
+                    •••
+                  </summary>
+                  <div className="project-menu">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/preview/${project.id}`)}
+                    >
+                      <Eye /> Preview
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const name = window.prompt("Rename site", project.name);
+                        if (name) renameProject(project.id, name);
+                      }}
+                    >
+                      <Pencil /> Rename
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => duplicateProject(project.id)}
+                    >
+                      <Copy /> Duplicate
+                    </button>
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Delete ${project.name}? This cannot be undone.`,
+                          )
+                        )
+                          deleteProject(project.id);
+                      }}
+                    >
+                      <Trash2 /> Delete
+                    </button>
+                  </div>
+                </details>
               </div>
             </article>
           ))}

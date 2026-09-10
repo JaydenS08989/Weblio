@@ -29,10 +29,21 @@ const EditorToolbar: React.FC = () => {
     theme,
     toggleTheme,
     activeProjectId,
+    activePageId,
+    projects,
+    setActivePage,
+    createPage,
+    publishProject,
   } = useEditorStore();
+  const project = projects.find(
+    (candidate) => candidate.id === activeProjectId,
+  );
   const publish = () => {
     setPublishState("publishing");
-    window.setTimeout(() => setPublishState("published"), 900);
+    window.setTimeout(() => {
+      publishProject(activeProjectId);
+      setPublishState("published");
+    }, 900);
   };
   return (
     <header className="editor-toolbar">
@@ -46,12 +57,35 @@ const EditorToolbar: React.FC = () => {
       </Link>
       <div className="brand-mark">W</div>
       <div className="project-identity">
-        <strong>Northstar Studio</strong>
+        <strong>{project?.name ?? "Untitled site"}</strong>
         <span>
           {publishState === "published"
             ? "Preview published locally"
             : "All changes saved locally"}
         </span>
+      </div>
+      <div className="page-picker">
+        <label>
+          <span className="sr-only">Active website page</span>
+          <select
+            value={activePageId}
+            onChange={(event) => setActivePage(event.target.value)}
+          >
+            {project?.pages.map((page) => (
+              <option key={page.id} value={page.id}>
+                {page.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={createPage}
+          aria-label="Add website page"
+        >
+          +
+        </button>
       </div>
       <div className="toolbar-center">
         <button

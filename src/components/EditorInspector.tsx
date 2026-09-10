@@ -1,5 +1,7 @@
 import { Copy, SlidersHorizontal, Trash2 } from "lucide-react";
 import type React from "react";
+
+import { getResolvedStyle } from "@/lib";
 import { useEditorStore } from "@/store";
 
 const EditorInspector: React.FC = () => {
@@ -13,6 +15,7 @@ const EditorInspector: React.FC = () => {
     updateStyle,
     deleteSelected,
     duplicateSelected,
+    resetStyle,
   } = useEditorStore();
   if (!element)
     return (
@@ -25,7 +28,10 @@ const EditorInspector: React.FC = () => {
         </p>
       </aside>
     );
-  const style = element.styles[breakpoint];
+  const overrides = element.styles[breakpoint];
+  const style = getResolvedStyle(element, breakpoint);
+  const inherited = (property: keyof typeof style) =>
+    breakpoint !== "desktop" && overrides[property] === undefined;
   return (
     <aside className="inspector">
       <div className="panel-heading">
@@ -52,7 +58,7 @@ const EditorInspector: React.FC = () => {
           </button>
         </div>
       </div>
-      {element.content !== undefined && (
+      {"content" in element && (
         <label className="field">
           <span>Content</span>
           <textarea
@@ -87,7 +93,9 @@ const EditorInspector: React.FC = () => {
         <h3>Layout</h3>
         <div className="field-row">
           <label className="field">
-            <span>Padding</span>
+            <span>
+              Padding {inherited("padding") && <small>Inherited</small>}
+            </span>
             <input
               type="number"
               value={style.padding ?? 0}
@@ -95,9 +103,18 @@ const EditorInspector: React.FC = () => {
                 updateStyle({ padding: Number(event.target.value) })
               }
             />
+            {breakpoint !== "desktop" && !inherited("padding") && (
+              <button
+                type="button"
+                className="reset-override"
+                onClick={() => resetStyle("padding")}
+              >
+                Reset override
+              </button>
+            )}
           </label>
           <label className="field">
-            <span>Gap</span>
+            <span>Gap {inherited("gap") && <small>Inherited</small>}</span>
             <input
               type="number"
               value={style.gap ?? 0}
@@ -105,6 +122,15 @@ const EditorInspector: React.FC = () => {
                 updateStyle({ gap: Number(event.target.value) })
               }
             />
+            {breakpoint !== "desktop" && !inherited("gap") && (
+              <button
+                type="button"
+                className="reset-override"
+                onClick={() => resetStyle("gap")}
+              >
+                Reset override
+              </button>
+            )}
           </label>
         </div>
         {element.type === "flex" && (
@@ -174,8 +200,8 @@ const EditorInspector: React.FC = () => {
         </label>
       </section>
       <div className="override-note">
-        Editing <strong>{breakpoint}</strong> styles. Values cascade from
-        desktop.
+        Editing <strong>{breakpoint}</strong> styles. Tablet inherits desktop;
+        mobile inherits tablet, then desktop.
       </div>
     </aside>
   );

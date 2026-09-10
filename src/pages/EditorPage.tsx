@@ -1,6 +1,6 @@
 import type React from "react";
 import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   AddElementsPanel,
   EditorCanvas,
@@ -16,12 +16,28 @@ const EditorPage: React.FC = () => {
 
   const theme = useEditorStore((state) => state.theme);
   const openProject = useEditorStore((state) => state.openProject);
+  const projectExists = useEditorStore((state) =>
+    state.projects.some((project) => project.id === projectId),
+  );
 
   useEditorKeyboardShortcuts();
 
   useEffect(() => {
     if (projectId) openProject(projectId);
   }, [projectId, openProject]);
+
+  if (!projectExists)
+    return (
+      <main className="not-found-state">
+        <h1>Site not found</h1>
+        <p>
+          The requested site may have been deleted from this local workspace.
+        </p>
+        <Link className="button primary" to="/dashboard">
+          Return to your sites
+        </Link>
+      </main>
+    );
 
   return (
     <div className="editor" data-theme={theme}>

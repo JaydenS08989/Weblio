@@ -1,6 +1,18 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createElement, createStarterDocument, getBrowserStorage } from "@/lib";
+
+import {
+  canContain,
+  createElement,
+  createWebsitePage,
+  duplicateSubtree,
+  getBrowserStorage,
+  insertElement,
+  migrateProject,
+  moveElementInDocument,
+  removeSubtree,
+} from "@/lib";
+
 import type {
   Breakpoint,
   EditorElement,
@@ -18,6 +30,7 @@ interface EditorSnapshot {
 interface EditorState {
   projects: WebsiteProject[];
   activeProjectId: string;
+  activePageId: string;
   document: WebsiteDocument;
   selectedElementId: string | null;
   breakpoint: Breakpoint;
@@ -27,19 +40,17 @@ interface EditorState {
   past: EditorSnapshot[];
   future: EditorSnapshot[];
   lastHistoryMutation: { key: string; timestamp: number } | null;
+  clipboard: EditorElement | null;
   selectElement: (id: string | null) => void;
-  addElement: (type: ElementType, parentId?: string) => void;
-  moveElement: (
-    elementId: string,
-    parentId: string,
-    insertionIndex?: number,
-  ) => void;
+  addElement: (type: ElementType, parentId?: string, index?: number) => void;
+  moveElement: (elementId: string, parentId: string, index?: number) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
-  updateSelected: (
-    patch: Partial<Pick<EditorElement, "content" | "alt" | "source">>,
-  ) => void;
+  copySelected: () => void;
+  paste: () => void;
+  updateSelected: (patch: Record<string, string>) => void;
   updateStyle: (patch: ElementStyle) => void;
+  resetStyle: (property: keyof ElementStyle) => void;
   undo: () => void;
   redo: () => void;
   setBreakpoint: (breakpoint: Breakpoint) => void;
@@ -47,49 +58,73 @@ interface EditorState {
   setZoom: (zoom: number) => void;
   toggleTheme: () => void;
   createProject: () => string;
-  openProject: (id: string) => void;
+  openProject: (id: string) => boolean;
+  setActivePage: (id: string) => void;
+  createPage: () => void;
+  renameProject: (id: string, name: string) => void;
+  duplicateProject: (id: string) => string | null;
+  deleteProject: (id: string) => void;
+  publishProject: (id: string) => void;
 }
 
-const initialDocument = createStarterDocument();
-
-const initialProject: WebsiteProject = {
-  id: "northstar",
-  name: "Northstar Studio",
-  status: "draft",
-  updatedAt: new Date().toISOString(),
-  document: initialDocument,
+const makeProject = (name: string): WebsiteProject => {
+  const page = createWebsitePage();
+  return {
+    id: crypto.randomUUID(),
+    name,
+    status: "draft",
+    updatedAt: new Date().toISOString(),
+    activePageId: page.id,
+    pages: [page],
+  };
 };
+
+const initialProject = { ...makeProject("Northstar Studio"), id: "northstar" };
 
 const snapshot = (state: EditorState): EditorSnapshot => ({
   document: structuredClone(state.document),
   selectedElementId: state.selectedElementId,
 });
 
-const mutateDocument = (
-  state: EditorState,
-  mutation: (document: WebsiteDocument) => void,
-  coalescingKey?: string,
-): Partial<EditorState> => {
-  const document = structuredClone(state.document);
-
-  mutation(document);
-  const updatedAt = new Date().toISOString();
-  const projects = state.projects.map((project) =>
-    project.id === state.activeProjectId
-      ? { ...project, document, updatedAt }
+const synchronizeDocument = (
+  projects: WebsiteProject[],
+  projectId: string,
+  pageId: string,
+  document: WebsiteDocument,
+): WebsiteProject[] =>
+  projects.map((project) =>
+    project.id === projectId
+      ? {
+          ...project,
+          updatedAt: new Date().toISOString(),
+          pages: project.pages.map((page) =>
+            page.id === pageId ? { ...page, document } : page,
+          ),
+        }
       : project,
   );
 
+const mutateDocument = (
+  state: EditorState,
+  mutation: (document: WebsiteDocument) => boolean | undefined,
+  coalescingKey?: string,
+): Partial<EditorState> => {
+  const document = structuredClone(state.document);
+  if (mutation(document) === false) return {};
   const timestamp = Date.now();
   const shouldCoalesce = Boolean(
     coalescingKey &&
       state.lastHistoryMutation?.key === coalescingKey &&
       timestamp - state.lastHistoryMutation.timestamp < 650,
   );
-
   return {
     document,
-    projects,
+    projects: synchronizeDocument(
+      state.projects,
+      state.activeProjectId,
+      state.activePageId,
+      document,
+    ),
     past: shouldCoalesce
       ? state.past
       : [...state.past, snapshot(state)].slice(-50),
@@ -105,7 +140,9 @@ export const useEditorStore = create<EditorState>()(
     (set, get) => ({
       projects: [initialProject],
       activeProjectId: initialProject.id,
-      document: initialDocument,
+      activePageId: initialProject.activePageId,
+      document:
+        initialProject.pages[0]?.document ?? createWebsitePage().document,
       selectedElementId: null,
       breakpoint: "desktop",
       viewportWidth: 1200,
@@ -114,194 +151,138 @@ export const useEditorStore = create<EditorState>()(
       past: [],
       future: [],
       lastHistoryMutation: null,
+      clipboard: null,
       selectElement: (selectedElementId) => set({ selectedElementId }),
-
-      addElement: (type, parentId) =>
+      addElement: (type, requestedParentId, index) =>
         set((state) => {
-          let selectedElementId = state.selectedElementId;
-          const mutation = mutateDocument(state, (document) => {
-            const parent =
-              document.elements[
-                parentId ?? state.selectedElementId ?? document.rootId
-              ];
-
-            const safeParent = parent?.children
-              ? parent
-              : document.elements[document.rootId];
-
-            if (!safeParent) return;
-
-            const element = createElement(type, safeParent.id);
-
-            document.elements[element.id] = element;
-            safeParent.children.push(element.id);
-            selectedElementId = element.id;
-          });
-
-          return { ...mutation, selectedElementId };
+          let parentId =
+            requestedParentId ??
+            state.selectedElementId ??
+            state.document.rootId;
+          if (!canContain(state.document.elements[parentId], type)) {
+            const selected =
+              state.document.elements[state.selectedElementId ?? ""];
+            parentId = selected?.parentId ?? state.document.rootId;
+          }
+          const element = createElement(type, parentId);
+          const update = mutateDocument(state, (document) =>
+            insertElement(document, element, parentId, index),
+          );
+          return Object.keys(update).length
+            ? { ...update, selectedElementId: element.id }
+            : {};
         }),
-      moveElement: (elementId, parentId, insertionIndex) =>
-        set((state) => {
-          const element = state.document.elements[elementId];
-          const nextParent = state.document.elements[parentId];
-          if (!element || !nextParent || element.id === state.document.rootId)
-            return {};
-
-          const descendantIds = new Set<string>();
-          const collectDescendants = (id: string) => {
-            state.document.elements[id]?.children.forEach((childId) => {
-              descendantIds.add(childId);
-              collectDescendants(childId);
-            });
-          };
-          collectDescendants(elementId);
-          if (descendantIds.has(parentId)) return {};
-
-          return mutateDocument(state, (document) => {
-            const previousParent =
-              element.parentId && document.elements[element.parentId];
-            if (previousParent) {
-              previousParent.children = previousParent.children.filter(
-                (childId) => childId !== elementId,
-              );
-            }
-
-            const parent = document.elements[parentId];
-            const movedElement = document.elements[elementId];
-            if (!parent || !movedElement) return;
-            movedElement.parentId = parentId;
-            const targetIndex = Math.min(
-              Math.max(insertionIndex ?? parent.children.length, 0),
-              parent.children.length,
-            );
-            parent.children.splice(targetIndex, 0, elementId);
-          });
-        }),
+      moveElement: (elementId, parentId, index) =>
+        set((state) =>
+          mutateDocument(state, (document) =>
+            moveElementInDocument(document, elementId, parentId, index),
+          ),
+        ),
       deleteSelected: () =>
         set((state) => {
-          const selected =
-            state.selectedElementId &&
-            state.document.elements[state.selectedElementId];
-
-          if (!selected || selected.id === state.document.rootId) return {};
-
-          return {
-            ...mutateDocument(state, (document) => {
-              const parent =
-                selected.parentId && document.elements[selected.parentId];
-
-              if (parent)
-                parent.children = parent.children.filter(
-                  (id) => id !== selected.id,
-                );
-
-              const remove = (id: string) => {
-                document.elements[id]?.children.forEach(remove);
-                delete document.elements[id];
-              };
-
-              remove(selected.id);
-            }),
-            selectedElementId: null,
-          };
+          if (!state.selectedElementId) return {};
+          const update = mutateDocument(state, (document) =>
+            removeSubtree(document, state.selectedElementId as string),
+          );
+          return Object.keys(update).length
+            ? { ...update, selectedElementId: null }
+            : {};
         }),
-
       duplicateSelected: () =>
         set((state) => {
-          const selected = state.selectedElementId
-            ? state.document.elements[state.selectedElementId]
-            : undefined;
-
-          if (!selected?.parentId) return {};
-
-          const parentId = selected.parentId;
-          let cloneId = "";
-
+          if (!state.selectedElementId) return {};
+          let cloneId: string | null = null;
           const update = mutateDocument(state, (document) => {
-            const clone = structuredClone(selected);
-
-            clone.id = crypto.randomUUID();
-            clone.label = `${clone.label} copy`;
-            clone.children = [];
-            cloneId = clone.id;
-
-            document.elements[clone.id] = clone;
-            document.elements[parentId]?.children.push(clone.id);
+            cloneId = duplicateSubtree(
+              document,
+              state.selectedElementId as string,
+            );
+            return Boolean(cloneId);
           });
-
-          return { ...update, selectedElementId: cloneId };
+          return cloneId ? { ...update, selectedElementId: cloneId } : {};
         }),
-
+      copySelected: () => {
+        const state = get();
+        const element = state.document.elements[state.selectedElementId ?? ""];
+        if (element) set({ clipboard: structuredClone(element) });
+      },
+      paste: () => {
+        const state = get();
+        if (!state.clipboard) return;
+        state.addElement(state.clipboard.type);
+      },
       updateSelected: (patch) =>
         set((state) =>
           mutateDocument(
             state,
             (document) => {
-              const element =
-                state.selectedElementId &&
-                document.elements[state.selectedElementId];
-              if (element) Object.assign(element, patch);
+              const element = document.elements[state.selectedElementId ?? ""];
+              if (!element) return false;
+              Object.assign(element, patch);
+              return true;
             },
-            `content-${state.selectedElementId}`,
+            `content-${state.selectedElementId}-${Object.keys(patch).join("-")}`,
           ),
         ),
-
       updateStyle: (patch) =>
         set((state) =>
           mutateDocument(
             state,
             (document) => {
-              const element =
-                state.selectedElementId &&
-                document.elements[state.selectedElementId];
-              if (element)
-                element.styles[state.breakpoint] = {
-                  ...element.styles[state.breakpoint],
-                  ...patch,
-                };
+              const element = document.elements[state.selectedElementId ?? ""];
+              if (!element) return false;
+              element.styles[state.breakpoint] = {
+                ...element.styles[state.breakpoint],
+                ...patch,
+              };
+              return true;
             },
             `style-${state.selectedElementId}-${state.breakpoint}-${Object.keys(patch).join("-")}`,
           ),
         ),
-
+      resetStyle: (property) =>
+        set((state) =>
+          mutateDocument(state, (document) => {
+            const element = document.elements[state.selectedElementId ?? ""];
+            if (!element || state.breakpoint === "desktop") return false;
+            delete element.styles[state.breakpoint][property];
+            return true;
+          }),
+        ),
       undo: () =>
         set((state) => {
           const previous = state.past.at(-1);
-
           if (!previous) return {};
-          const projects = state.projects.map((project) =>
-            project.id === state.activeProjectId
-              ? { ...project, document: previous.document }
-              : project,
-          );
           return {
             ...previous,
-            projects,
+            projects: synchronizeDocument(
+              state.projects,
+              state.activeProjectId,
+              state.activePageId,
+              previous.document,
+            ),
             past: state.past.slice(0, -1),
-            future: [snapshot(state), ...state.future],
+            future: [snapshot(state), ...state.future].slice(0, 50),
             lastHistoryMutation: null,
           };
         }),
-
       redo: () =>
         set((state) => {
           const next = state.future[0];
-
           if (!next) return {};
-          const projects = state.projects.map((project) =>
-            project.id === state.activeProjectId
-              ? { ...project, document: next.document }
-              : project,
-          );
           return {
             ...next,
-            projects,
-            past: [...state.past, snapshot(state)],
+            projects: synchronizeDocument(
+              state.projects,
+              state.activeProjectId,
+              state.activePageId,
+              next.document,
+            ),
+            past: [...state.past, snapshot(state)].slice(-50),
             future: state.future.slice(1),
             lastHistoryMutation: null,
           };
         }),
-
       setBreakpoint: (breakpoint) =>
         set({
           breakpoint,
@@ -309,54 +290,156 @@ export const useEditorStore = create<EditorState>()(
             breakpoint
           ],
         }),
-
       setViewportWidth: (viewportWidth) =>
         set({ viewportWidth: Math.min(1440, Math.max(320, viewportWidth)) }),
-
       setZoom: (zoom) => set({ zoom: Math.min(1.25, Math.max(0.5, zoom)) }),
-
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
-
       createProject: () => {
-        const id = crypto.randomUUID();
-
-        const project = {
-          id,
-          name: `Untitled site ${get().projects.length + 1}`,
-          status: "draft" as const,
-          updatedAt: new Date().toISOString(),
-          document: createStarterDocument(),
-        };
-
+        const project = makeProject(
+          `Untitled site ${get().projects.length + 1}`,
+        );
         set((state) => ({
           projects: [project, ...state.projects],
-          activeProjectId: id,
-          document: project.document,
+          activeProjectId: project.id,
+          activePageId: project.activePageId,
+          document: project.pages[0]?.document ?? createWebsitePage().document,
+          selectedElementId: null,
           past: [],
           future: [],
         }));
-
-        return id;
+        return project.id;
       },
-
       openProject: (id) => {
         const project = get().projects.find((candidate) => candidate.id === id);
-
-        if (project)
-          set({
-            activeProjectId: id,
-            document: project.document,
-            past: [],
-            future: [],
-            selectedElementId: null,
-          });
+        const page =
+          project?.pages.find(
+            (candidate) => candidate.id === project.activePageId,
+          ) ?? project?.pages[0];
+        if (!project || !page) return false;
+        set({
+          activeProjectId: id,
+          activePageId: page.id,
+          document: page.document,
+          selectedElementId: null,
+          past: [],
+          future: [],
+        });
+        return true;
       },
+      setActivePage: (id) => {
+        const state = get();
+        const project = state.projects.find(
+          (candidate) => candidate.id === state.activeProjectId,
+        );
+        const page = project?.pages.find((candidate) => candidate.id === id);
+        if (!project || !page) return;
+        set({
+          activePageId: id,
+          document: page.document,
+          selectedElementId: null,
+          past: [],
+          future: [],
+          projects: state.projects.map((candidate) =>
+            candidate.id === project.id
+              ? { ...candidate, activePageId: id }
+              : candidate,
+          ),
+        });
+      },
+      createPage: () => {
+        const state = get();
+        const project = state.projects.find(
+          (candidate) => candidate.id === state.activeProjectId,
+        );
+        if (!project) return;
+        const page = createWebsitePage(`Page ${project.pages.length + 1}`);
+        set({
+          activePageId: page.id,
+          document: page.document,
+          selectedElementId: null,
+          past: [],
+          future: [],
+          projects: state.projects.map((candidate) =>
+            candidate.id === project.id
+              ? {
+                  ...candidate,
+                  activePageId: page.id,
+                  pages: [...candidate.pages, page],
+                }
+              : candidate,
+          ),
+        });
+      },
+      renameProject: (id, name) =>
+        set((state) => ({
+          projects: state.projects.map((project) =>
+            project.id === id
+              ? {
+                  ...project,
+                  name: name.trim() || project.name,
+                  updatedAt: new Date().toISOString(),
+                }
+              : project,
+          ),
+        })),
+      duplicateProject: (id) => {
+        const source = get().projects.find((project) => project.id === id);
+        if (!source) return null;
+        const copy = structuredClone(source);
+        copy.id = crypto.randomUUID();
+        copy.name = `${copy.name} copy`;
+        copy.status = "draft";
+        copy.updatedAt = new Date().toISOString();
+        delete copy.publishedAt;
+        set((state) => ({ projects: [copy, ...state.projects] }));
+        return copy.id;
+      },
+      deleteProject: (id) =>
+        set((state) => ({
+          projects: state.projects.filter((project) => project.id !== id),
+        })),
+      publishProject: (id) =>
+        set((state) => ({
+          projects: state.projects.map((project) =>
+            project.id === id
+              ? {
+                  ...project,
+                  status: "published",
+                  publishedAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                }
+              : project,
+          ),
+        })),
     }),
     {
-      name: "weblio-workspace-v1",
+      name: "weblio-workspace",
+      version: 2,
       storage: createJSONStorage(getBrowserStorage),
       partialize: (state) => ({ projects: state.projects, theme: state.theme }),
+      migrate: (persisted) => {
+        const state = persisted as Partial<EditorState>;
+        const projects = (state.projects ?? [])
+          .map(migrateProject)
+          .filter((project): project is WebsiteProject => project !== null);
+        return {
+          ...state,
+          projects: projects.length ? projects : [initialProject],
+        };
+      },
+      onRehydrateStorage: () => (state) => {
+        const project = state?.projects[0];
+        const page =
+          project?.pages.find(
+            (candidate) => candidate.id === project.activePageId,
+          ) ?? project?.pages[0];
+        if (state && project && page) {
+          state.activeProjectId = project.id;
+          state.activePageId = page.id;
+          state.document = page.document;
+        }
+      },
     },
   ),
 );
