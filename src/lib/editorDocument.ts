@@ -1,27 +1,32 @@
-import type {
-  Breakpoint,
-  EditorElement,
-  ElementType,
-  WebsiteDocument,
-} from "@/types";
+import type { Breakpoint, EditorElement, ElementType, WebsiteDocument } from "@/types";
 
 const responsiveStyles = (
   desktop: EditorElement["styles"][Breakpoint],
-): EditorElement["styles"] => ({ desktop, tablet: {}, mobile: {} });
-export const createElement = (
-  type: ElementType,
-  parentId: string | null,
-): EditorElement => {
+): EditorElement["styles"] => ({
+  desktop,
+  tablet: {},
+  mobile: {},
+});
+
+export const createElement = (type: ElementType, parentId: string | null): EditorElement => {
   const id = crypto.randomUUID();
+
   const defaults: Record<ElementType, Partial<EditorElement>> = {
     section: {
       label: "Section",
-      styles: responsiveStyles({ padding: 64, background: "#ffffff" }),
+      styles: responsiveStyles({
+        padding: 64,
+        background: "#ffffff",
+      }),
     },
+
     container: {
       label: "Container",
-      styles: responsiveStyles({ padding: 24 }),
+      styles: responsiveStyles({
+        padding: 24,
+      }),
     },
+
     flex: {
       label: "Flex container",
       styles: responsiveStyles({
@@ -31,21 +36,34 @@ export const createElement = (
         alignItems: "center",
       }),
     },
+
     grid: {
       label: "Grid container",
-      styles: responsiveStyles({ display: "grid", gridColumns: 2, gap: 16 }),
+      styles: responsiveStyles({
+        display: "grid",
+        gridColumns: 2,
+        gap: 16,
+      }),
     },
+
     heading: {
       label: "Heading",
       content: "Build something remarkable",
-      styles: responsiveStyles({ fontSize: 48, color: "#151515" }),
+      styles: responsiveStyles({
+        fontSize: 48,
+        color: "#151515",
+      }),
     },
+
     text: {
       label: "Text",
-      content:
-        "Shape every detail of your website with a flexible visual canvas.",
-      styles: responsiveStyles({ fontSize: 17, color: "#5c5b57" }),
+      content: "Shape every detail of your website with a flexible visual canvas.",
+      styles: responsiveStyles({
+        fontSize: 17,
+        color: "#5c5b57",
+      }),
     },
+
     button: {
       label: "Button",
       content: "Get started",
@@ -57,14 +75,18 @@ export const createElement = (
         borderRadius: 8,
       }),
     },
+
     image: {
       label: "Image",
       source:
         "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
       alt: "Bright creative studio",
-      styles: responsiveStyles({ borderRadius: 12 }),
+      styles: responsiveStyles({
+        borderRadius: 12,
+      }),
     },
   };
+
   return {
     id,
     type,
@@ -84,7 +106,9 @@ export const createStarterDocument = (): WebsiteDocument => {
   const heading = createElement("heading", section.id);
   const text = createElement("text", section.id);
   const button = createElement("button", section.id);
+
   section.children = [heading.id, text.id, button.id];
+
   return {
     version: 1,
     rootId: section.id,
@@ -97,10 +121,7 @@ export const createStarterDocument = (): WebsiteDocument => {
   };
 };
 
-export const getResolvedStyle = (
-  element: EditorElement,
-  breakpoint: Breakpoint,
-) => ({
+export const getResolvedStyle = (element: EditorElement, breakpoint: Breakpoint) => ({
   ...element.styles.desktop,
   ...(breakpoint === "mobile" ? element.styles.tablet : {}),
   ...element.styles[breakpoint],

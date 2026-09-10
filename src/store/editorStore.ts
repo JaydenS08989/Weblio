@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createElement, createStarterDocument } from "@/lib";
+
 import type {
   Breakpoint,
   EditorElement,
@@ -15,6 +16,7 @@ interface EditorSnapshot {
   document: WebsiteDocument;
   selectedElementId: string | null;
 }
+
 interface EditorState {
   projects: WebsiteProject[];
   activeProjectId: string;
@@ -36,9 +38,7 @@ interface EditorState {
   ) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
-  updateSelected: (
-    patch: Partial<Pick<EditorElement, "content" | "alt" | "source">>,
-  ) => void;
+  updateSelected: (patch: Partial<Pick<EditorElement, "content" | "alt" | "source">>) => void;
   updateStyle: (patch: ElementStyle) => void;
   undo: () => void;
   redo: () => void;
@@ -51,6 +51,7 @@ interface EditorState {
 }
 
 const initialDocument = createStarterDocument();
+
 const initialProject: WebsiteProject = {
   id: "northstar",
   name: "Northstar Studio",
@@ -58,17 +59,21 @@ const initialProject: WebsiteProject = {
   updatedAt: new Date().toISOString(),
   document: initialDocument,
 };
+
 const snapshot = (state: EditorState): EditorSnapshot => ({
   document: structuredClone(state.document),
   selectedElementId: state.selectedElementId,
 });
+
 const mutateDocument = (
   state: EditorState,
   mutation: (document: WebsiteDocument) => void,
   coalescingKey?: string,
 ): Partial<EditorState> => {
   const document = structuredClone(state.document);
+
   mutation(document);
+<<<<<<< HEAD
   const updatedAt = new Date().toISOString();
   const projects = state.projects.map((project) =>
     project.id === state.activeProjectId
@@ -82,6 +87,8 @@ const mutateDocument = (
       state.lastHistoryMutation?.key === coalescingKey &&
       timestamp - state.lastHistoryMutation.timestamp < 650,
   );
+=======
+>>>>>>> fc5d160 (Improved application architecture)
 
   return {
     document,
@@ -111,21 +118,23 @@ export const useEditorStore = create<EditorState>()(
       future: [],
       lastHistoryMutation: null,
       selectElement: (selectedElementId) => set({ selectedElementId }),
+
       addElement: (type, parentId) =>
         set((state) => {
           let selectedElementId = state.selectedElementId;
           const mutation = mutateDocument(state, (document) => {
             const parent =
-              document.elements[
-                parentId ?? state.selectedElementId ?? document.rootId
-              ];
-            const safeParent = parent?.children
-              ? parent
-              : document.elements[document.rootId];
+              document.elements[parentId ?? state.selectedElementId ?? document.rootId];
+
+            const safeParent = parent?.children ? parent : document.elements[document.rootId];
+
             if (!safeParent) return;
+
             const element = createElement(type, safeParent.id);
+
             document.elements[element.id] = element;
             safeParent.children.push(element.id);
+<<<<<<< HEAD
             selectedElementId = element.id;
           });
 
@@ -168,49 +177,63 @@ export const useEditorStore = create<EditorState>()(
             parent.children.splice(targetIndex, 0, elementId);
           });
         }),
+=======
+            state.selectedElementId = element.id;
+          }),
+        ),
+
+>>>>>>> fc5d160 (Improved application architecture)
       deleteSelected: () =>
         set((state) => {
           const selected =
-            state.selectedElementId &&
-            state.document.elements[state.selectedElementId];
+            state.selectedElementId && state.document.elements[state.selectedElementId];
+
           if (!selected || selected.id === state.document.rootId) return {};
+
           return {
             ...mutateDocument(state, (document) => {
-              const parent =
-                selected.parentId && document.elements[selected.parentId];
-              if (parent)
-                parent.children = parent.children.filter(
-                  (id) => id !== selected.id,
-                );
+              const parent = selected.parentId && document.elements[selected.parentId];
+
+              if (parent) parent.children = parent.children.filter((id) => id !== selected.id);
+
               const remove = (id: string) => {
                 document.elements[id]?.children.forEach(remove);
                 delete document.elements[id];
               };
+
               remove(selected.id);
             }),
             selectedElementId: null,
           };
         }),
+
       duplicateSelected: () =>
         set((state) => {
           const selected =
-            state.selectedElementId &&
-            state.document.elements[state.selectedElementId];
+            state.selectedElementId && state.document.elements[state.selectedElementId];
+
           if (!selected || !selected.parentId) return {};
+
           let cloneId = "";
+
           const update = mutateDocument(state, (document) => {
             const clone = structuredClone(selected);
+
             clone.id = crypto.randomUUID();
             clone.label = `${clone.label} copy`;
             clone.children = [];
             cloneId = clone.id;
+
             document.elements[clone.id] = clone;
             document.elements[selected.parentId!]?.children.push(clone.id);
           });
+
           return { ...update, selectedElementId: cloneId };
         }),
+
       updateSelected: (patch) =>
         set((state) =>
+<<<<<<< HEAD
           mutateDocument(
             state,
             (document) => {
@@ -221,9 +244,18 @@ export const useEditorStore = create<EditorState>()(
             },
             `content-${state.selectedElementId}`,
           ),
+=======
+          mutateDocument(state, (document) => {
+            const element = state.selectedElementId && document.elements[state.selectedElementId];
+
+            if (element) Object.assign(element, patch);
+          }),
+>>>>>>> fc5d160 (Improved application architecture)
         ),
+
       updateStyle: (patch) =>
         set((state) =>
+<<<<<<< HEAD
           mutateDocument(
             state,
             (document) => {
@@ -238,16 +270,33 @@ export const useEditorStore = create<EditorState>()(
             },
             `style-${state.selectedElementId}-${state.breakpoint}-${Object.keys(patch).join("-")}`,
           ),
+=======
+          mutateDocument(state, (document) => {
+            const element = state.selectedElementId && document.elements[state.selectedElementId];
+
+            if (element)
+              element.styles[state.breakpoint] = {
+                ...element.styles[state.breakpoint],
+                ...patch,
+              };
+          }),
+>>>>>>> fc5d160 (Improved application architecture)
         ),
+
       undo: () =>
         set((state) => {
           const previous = state.past.at(-1);
+
           if (!previous) return {};
+<<<<<<< HEAD
           const projects = state.projects.map((project) =>
             project.id === state.activeProjectId
               ? { ...project, document: previous.document }
               : project,
           );
+=======
+
+>>>>>>> fc5d160 (Improved application architecture)
           return {
             ...previous,
             projects,
@@ -256,15 +305,21 @@ export const useEditorStore = create<EditorState>()(
             lastHistoryMutation: null,
           };
         }),
+
       redo: () =>
         set((state) => {
           const next = state.future[0];
+
           if (!next) return {};
+<<<<<<< HEAD
           const projects = state.projects.map((project) =>
             project.id === state.activeProjectId
               ? { ...project, document: next.document }
               : project,
           );
+=======
+
+>>>>>>> fc5d160 (Improved application architecture)
           return {
             ...next,
             projects,
@@ -273,20 +328,23 @@ export const useEditorStore = create<EditorState>()(
             lastHistoryMutation: null,
           };
         }),
+
       setBreakpoint: (breakpoint) =>
         set({
           breakpoint,
-          viewportWidth: { desktop: 1200, tablet: 768, mobile: 390 }[
-            breakpoint
-          ],
+          viewportWidth: { desktop: 1200, tablet: 768, mobile: 390 }[breakpoint],
         }),
+
       setViewportWidth: (viewportWidth) =>
         set({ viewportWidth: Math.min(1440, Math.max(320, viewportWidth)) }),
+
       setZoom: (zoom) => set({ zoom: Math.min(1.25, Math.max(0.5, zoom)) }),
-      toggleTheme: () =>
-        set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
+
+      toggleTheme: () => set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
+
       createProject: () => {
         const id = crypto.randomUUID();
+
         const project = {
           id,
           name: `Untitled site ${get().projects.length + 1}`,
@@ -294,6 +352,7 @@ export const useEditorStore = create<EditorState>()(
           updatedAt: new Date().toISOString(),
           document: createStarterDocument(),
         };
+
         set((state) => ({
           projects: [project, ...state.projects],
           activeProjectId: id,
@@ -301,10 +360,13 @@ export const useEditorStore = create<EditorState>()(
           past: [],
           future: [],
         }));
+
         return id;
       },
+
       openProject: (id) => {
         const project = get().projects.find((candidate) => candidate.id === id);
+
         if (project)
           set({
             activeProjectId: id,

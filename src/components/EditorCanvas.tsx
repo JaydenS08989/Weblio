@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 import { useDroppable } from "@dnd-kit/core";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
+=======
+>>>>>>> fc5d160 (Improved application architecture)
 import React from "react";
+import WebsiteRenderer from "./WebsiteRenderer";
+
+import { Monitor, Smartphone, Tablet } from "lucide-react";
 import { useEditorStore } from "@/store";
 import type { Breakpoint } from "@/types";
-import WebsiteRenderer from "./WebsiteRenderer";
 
 const breakpoints: Array<{
   id: Breakpoint;
@@ -14,6 +19,7 @@ const breakpoints: Array<{
   { id: "tablet", label: "Tablet", icon: <Tablet /> },
   { id: "mobile", label: "Mobile", icon: <Smartphone /> },
 ];
+
 const EditorCanvas: React.FC = () => {
   const {
     document,
@@ -25,9 +31,13 @@ const EditorCanvas: React.FC = () => {
     selectedElementId,
     selectElement,
   } = useEditorStore();
+<<<<<<< HEAD
   const { isOver, setNodeRef } = useDroppable({
     id: "editor-canvas-drop-zone",
   });
+=======
+
+>>>>>>> fc5d160 (Improved application architecture)
   const resize = (event: React.PointerEvent) => {
     const startX = event.clientX;
     const startWidth = viewportWidth;
@@ -41,6 +51,7 @@ const EditorCanvas: React.FC = () => {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", stop);
   };
+
   return (
     <main
       ref={setNodeRef}
@@ -100,4 +111,5 @@ const EditorCanvas: React.FC = () => {
     </main>
   );
 };
+
 export default EditorCanvas;

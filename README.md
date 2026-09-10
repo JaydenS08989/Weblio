@@ -18,13 +18,13 @@ The development server runs at `http://localhost:3000` and uses SPA history fall
 
 ## Quality commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run build` | Create an optimized, hashed production bundle |
-| `npm run typecheck` | Run strict TypeScript validation |
-| `npm run lint` | Run Biome lint and formatting checks |
-| `npm run format` | Apply Biome formatting |
-| `npm test` | Run the Vitest behavior suite |
+| Command             | Purpose                                       |
+| ------------------- | --------------------------------------------- |
+| `npm run build`     | Create an optimized, hashed production bundle |
+| `npm run typecheck` | Run strict TypeScript validation              |
+| `npm run lint`      | Run Biome lint and formatting checks          |
+| `npm run format`    | Apply Biome formatting                        |
+| `npm test`          | Run the Vitest behavior suite                 |
 
 ## Architecture
 

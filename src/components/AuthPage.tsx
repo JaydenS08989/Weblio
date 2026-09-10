@@ -1,17 +1,20 @@
-import { ArrowRight, Check, Layers3 } from "lucide-react";
 import React, { useState } from "react";
+import { ArrowRight, Check, Layers3 } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
 
 interface AuthPageProps {
   mode: "sign-in" | "sign-up";
 }
+
 const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const signIn = useAuthStore((state) => state.signIn);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -20,6 +23,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
       navigate("/dashboard");
     }, 500);
   };
+
   return (
     <main className="auth-layout">
       <section className="auth-showcase">
@@ -33,10 +37,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
             <br />
             without boundaries.
           </h1>
-          <p>
-            A professional canvas for turning ambitious ideas into responsive
-            websites.
-          </p>
+          <p>A professional canvas for turning ambitious ideas into responsive websites.</p>
           <ul>
             <li>
               <Check />
@@ -52,9 +53,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
             </li>
           </ul>
         </div>
-        <span className="showcase-footer">
-          Crafted for teams who care about details.
-        </span>
+        <span className="showcase-footer">Crafted for teams who care about details.</span>
       </section>
       <section className="auth-form-area">
         <form className="auth-form" onSubmit={submit}>
@@ -62,11 +61,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
             <Layers3 /> Weblio
           </div>
           <span className="eyebrow">Welcome to Weblio</span>
-          <h2>
-            {mode === "sign-in"
-              ? "Sign in to your workspace"
-              : "Create your workspace"}
-          </h2>
+          <h2>{mode === "sign-in" ? "Sign in to your workspace" : "Create your workspace"}</h2>
           <p>
             {mode === "sign-in"
               ? "Continue building where you left off."
@@ -93,18 +88,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
             <input
               required
               type="password"
-              autoComplete={
-                mode === "sign-in" ? "current-password" : "new-password"
-              }
+              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
               minLength={8}
               defaultValue="password"
             />
           </label>
-          <button
-            type="submit"
-            className="button primary auth-submit"
-            disabled={isSubmitting}
-          >
+          <button type="submit" className="button primary auth-submit" disabled={isSubmitting}>
             {isSubmitting
               ? "Opening workspace…"
               : mode === "sign-in"
@@ -126,4 +115,5 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
     </main>
   );
 };
+
 export default AuthPage;

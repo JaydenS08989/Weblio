@@ -13,10 +13,9 @@ const ProtectedRoute: React.FC = () =>
   ) : (
     <Navigate to="/auth/sign-in" replace />
   );
+
 const App: React.FC = () => (
-  <Suspense
-    fallback={<div className="route-loading">Preparing your workspace…</div>}
-  >
+  <Suspense fallback={<div className="route-loading">Preparing your workspace…</div>}>
     <Routes>
       <Route path="/auth/sign-in" element={<AuthPage mode="sign-in" />} />
       <Route path="/auth/sign-up" element={<AuthPage mode="sign-up" />} />
@@ -29,4 +28,5 @@ const App: React.FC = () => (
     </Routes>
   </Suspense>
 );
+
 export default App;

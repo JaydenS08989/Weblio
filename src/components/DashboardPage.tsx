@@ -1,12 +1,5 @@
-import {
-  ExternalLink,
-  LayoutGrid,
-  LogOut,
-  MoreHorizontal,
-  Plus,
-  Search,
-} from "lucide-react";
 import React, { useState } from "react";
+import { ExternalLink, LayoutGrid, LogOut, MoreHorizontal, Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore, useEditorStore } from "@/store";
 
@@ -20,7 +13,9 @@ const DashboardPage: React.FC = () => {
   const visibleProjects = projects.filter((project) =>
     project.name.toLowerCase().includes(query.toLowerCase()),
   );
+
   const create = () => navigate(`/editor/${createProject()}`);
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -75,8 +70,7 @@ const DashboardPage: React.FC = () => {
             />
           </label>
           <span>
-            {visibleProjects.length}{" "}
-            {visibleProjects.length === 1 ? "site" : "sites"}
+            {visibleProjects.length} {visibleProjects.length === 1 ? "site" : "sites"}
           </span>
         </div>
         <section className="project-grid" aria-label="Your sites">
@@ -130,4 +124,5 @@ const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
 export default DashboardPage;

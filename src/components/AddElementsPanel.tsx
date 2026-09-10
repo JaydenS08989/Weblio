@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { useDraggable } from "@dnd-kit/core";
+=======
+import React from "react";
+
+>>>>>>> fc5d160 (Improved application architecture)
 import {
   Box,
   Grid2X2,
@@ -9,7 +14,7 @@ import {
   Rows3,
   Type,
 } from "lucide-react";
-import React from "react";
+
 import { useEditorStore } from "@/store";
 import type { ElementType } from "@/types";
 import type { AddElementDragData } from "./EditorDragDropProvider";
@@ -28,6 +33,7 @@ const options: Array<{
   { type: "button", label: "Button", icon: <MousePointerClick /> },
   { type: "image", label: "Image", icon: <Image /> },
 ];
+<<<<<<< HEAD
 interface AddElementButtonProps {
   elementType: ElementType;
   icon: React.ReactNode;
@@ -65,9 +71,12 @@ const AddElementButton: React.FC<AddElementButtonProps> = ({
     </button>
   );
 };
+=======
+>>>>>>> fc5d160 (Improved application architecture)
 
 const AddElementsPanel: React.FC = () => {
   const addElement = useEditorStore((state) => state.addElement);
+
   return (
     <aside className="left-panel">
       <div className="panel-heading">
@@ -77,11 +86,10 @@ const AddElementsPanel: React.FC = () => {
         </div>
         <LayoutTemplate />
       </div>
-      <p className="panel-help">
-        Choose an element to add it to the selected container.
-      </p>
+      <p className="panel-help">Choose an element to add it to the selected container.</p>
       <div className="element-grid">
         {options.map((option) => (
+<<<<<<< HEAD
           <AddElementButton
             key={option.type}
             elementType={option.type}
@@ -89,10 +97,17 @@ const AddElementsPanel: React.FC = () => {
             label={option.label}
             onAdd={addElement}
           />
+=======
+          <button type="button" key={option.type} onClick={() => addElement(option.type)}>
+            {option.icon}
+            <span>{option.label}</span>
+          </button>
+>>>>>>> fc5d160 (Improved application architecture)
         ))}
       </div>
       <LayersNavigator />
     </aside>
   );
 };
+
 export default AddElementsPanel;

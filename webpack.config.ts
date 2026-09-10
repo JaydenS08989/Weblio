@@ -1,9 +1,11 @@
 import path from "node:path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+
 import type { Configuration } from "webpack";
 import type { Configuration as DevServerConfiguration } from "webpack-dev-server";
 
 const sourcePath = path.resolve(__dirname, "src");
+
 const moduleConfiguration: Pick<Configuration, "module"> = {
   module: {
     rules: [
@@ -13,9 +15,11 @@ const moduleConfiguration: Pick<Configuration, "module"> = {
     ],
   },
 };
+
 const resolveConfiguration: Pick<Configuration, "resolve"> = {
-  resolve: { extensions: [".tsx", ".ts", ".js"], alias: { "@": sourcePath } },
+  resolve: { extensions: [".tsx", ".ts"], alias: { "@": sourcePath } },
 };
+
 const optimizationConfiguration: Pick<Configuration, "optimization"> = {
   optimization: {
     runtimeChunk: "single",
@@ -23,6 +27,7 @@ const optimizationConfiguration: Pick<Configuration, "optimization"> = {
     moduleIds: "deterministic",
   },
 };
+
 const developmentServerConfiguration: { devServer: DevServerConfiguration } = {
   devServer: {
     port: 3000,
@@ -31,20 +36,17 @@ const developmentServerConfiguration: { devServer: DevServerConfiguration } = {
     client: { overlay: true },
   },
 };
-const webpackConfig = (
-  _environment: unknown,
-  arguments_: { mode?: string },
-): Configuration => {
+
+const webpackConfig = (_environment: unknown, arguments_: { mode?: string }): Configuration => {
   const isProduction = arguments_.mode === "production";
+
   return {
     mode: isProduction ? "production" : "development",
     entry: "./src/index.tsx",
     output: {
       path: path.resolve(__dirname, "dist"),
-      filename: isProduction
-        ? "assets/[name].[contenthash:8].js"
-        : "assets/[name].js",
-      assetModuleFilename: "assets/[name].[contenthash:8][ext]",
+      filename: isProduction ? "static/js/[name].[contenthash:8].js" : "static/js/[name].js",
+      assetModuleFilename: "static/css/[name].[contenthash:8][ext]",
       clean: true,
       publicPath: "/",
     },
@@ -57,4 +59,5 @@ const webpackConfig = (
     plugins: [new HtmlWebpackPlugin({ template: "public/index.html" })],
   };
 };
+
 export default webpackConfig;

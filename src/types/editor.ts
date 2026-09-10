@@ -1,4 +1,5 @@
 export type Breakpoint = "desktop" | "tablet" | "mobile";
+
 export type ElementType =
   | "section"
   | "container"
@@ -42,6 +43,7 @@ export interface WebsiteDocument {
   rootId: string;
   elements: Record<string, EditorElement>;
 }
+
 export interface WebsiteProject {
   id: string;
   name: string;

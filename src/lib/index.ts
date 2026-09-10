@@ -1,5 +1,1 @@
-export {
-  createElement,
-  createStarterDocument,
-  getResolvedStyle,
-} from "./editorDocument";
+export { createElement, createStarterDocument, getResolvedStyle } from "./editorDocument";
