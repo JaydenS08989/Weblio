@@ -1,12 +1,8 @@
-<<<<<<< HEAD
 import { useDroppable } from "@dnd-kit/core";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-=======
->>>>>>> fc5d160 (Improved application architecture)
 import React from "react";
 import WebsiteRenderer from "./WebsiteRenderer";
 
-import { Monitor, Smartphone, Tablet } from "lucide-react";
 import { useEditorStore } from "@/store";
 import type { Breakpoint } from "@/types";
 
@@ -31,13 +27,9 @@ const EditorCanvas: React.FC = () => {
     selectedElementId,
     selectElement,
   } = useEditorStore();
-<<<<<<< HEAD
   const { isOver, setNodeRef } = useDroppable({
     id: "editor-canvas-drop-zone",
   });
-=======
-
->>>>>>> fc5d160 (Improved application architecture)
   const resize = (event: React.PointerEvent) => {
     const startX = event.clientX;
     const startWidth = viewportWidth;

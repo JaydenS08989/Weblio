@@ -17,7 +17,10 @@ const moduleConfiguration: Pick<Configuration, "module"> = {
 };
 
 const resolveConfiguration: Pick<Configuration, "resolve"> = {
-  resolve: { extensions: [".tsx", ".ts"], alias: { "@": sourcePath } },
+  resolve: {
+    extensions: [".tsx", ".ts", ".jsx", ".js"],
+    alias: { "@": sourcePath },
+  },
 };
 
 const optimizationConfiguration: Pick<Configuration, "optimization"> = {
@@ -37,7 +40,10 @@ const developmentServerConfiguration: { devServer: DevServerConfiguration } = {
   },
 };
 
-const webpackConfig = (_environment: unknown, arguments_: { mode?: string }): Configuration => {
+const webpackConfig = (
+  _environment: unknown,
+  arguments_: { mode?: string },
+): Configuration => {
   const isProduction = arguments_.mode === "production";
 
   return {
@@ -45,7 +51,9 @@ const webpackConfig = (_environment: unknown, arguments_: { mode?: string }): Co
     entry: "./src/index.tsx",
     output: {
       path: path.resolve(__dirname, "dist"),
-      filename: isProduction ? "static/js/[name].[contenthash:8].js" : "static/js/[name].js",
+      filename: isProduction
+        ? "static/js/[name].[contenthash:8].js"
+        : "static/js/[name].js",
       assetModuleFilename: "static/css/[name].[contenthash:8][ext]",
       clean: true,
       publicPath: "/",

@@ -38,7 +38,9 @@ interface EditorState {
   ) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
-  updateSelected: (patch: Partial<Pick<EditorElement, "content" | "alt" | "source">>) => void;
+  updateSelected: (
+    patch: Partial<Pick<EditorElement, "content" | "alt" | "source">>,
+  ) => void;
   updateStyle: (patch: ElementStyle) => void;
   undo: () => void;
   redo: () => void;
@@ -73,7 +75,6 @@ const mutateDocument = (
   const document = structuredClone(state.document);
 
   mutation(document);
-<<<<<<< HEAD
   const updatedAt = new Date().toISOString();
   const projects = state.projects.map((project) =>
     project.id === state.activeProjectId
@@ -87,8 +88,6 @@ const mutateDocument = (
       state.lastHistoryMutation?.key === coalescingKey &&
       timestamp - state.lastHistoryMutation.timestamp < 650,
   );
-=======
->>>>>>> fc5d160 (Improved application architecture)
 
   return {
     document,
@@ -124,9 +123,13 @@ export const useEditorStore = create<EditorState>()(
           let selectedElementId = state.selectedElementId;
           const mutation = mutateDocument(state, (document) => {
             const parent =
-              document.elements[parentId ?? state.selectedElementId ?? document.rootId];
+              document.elements[
+                parentId ?? state.selectedElementId ?? document.rootId
+              ];
 
-            const safeParent = parent?.children ? parent : document.elements[document.rootId];
+            const safeParent = parent?.children
+              ? parent
+              : document.elements[document.rootId];
 
             if (!safeParent) return;
 
@@ -134,7 +137,6 @@ export const useEditorStore = create<EditorState>()(
 
             document.elements[element.id] = element;
             safeParent.children.push(element.id);
-<<<<<<< HEAD
             selectedElementId = element.id;
           });
 
@@ -177,24 +179,23 @@ export const useEditorStore = create<EditorState>()(
             parent.children.splice(targetIndex, 0, elementId);
           });
         }),
-=======
-            state.selectedElementId = element.id;
-          }),
-        ),
-
->>>>>>> fc5d160 (Improved application architecture)
       deleteSelected: () =>
         set((state) => {
           const selected =
-            state.selectedElementId && state.document.elements[state.selectedElementId];
+            state.selectedElementId &&
+            state.document.elements[state.selectedElementId];
 
           if (!selected || selected.id === state.document.rootId) return {};
 
           return {
             ...mutateDocument(state, (document) => {
-              const parent = selected.parentId && document.elements[selected.parentId];
+              const parent =
+                selected.parentId && document.elements[selected.parentId];
 
-              if (parent) parent.children = parent.children.filter((id) => id !== selected.id);
+              if (parent)
+                parent.children = parent.children.filter(
+                  (id) => id !== selected.id,
+                );
 
               const remove = (id: string) => {
                 document.elements[id]?.children.forEach(remove);
@@ -210,7 +211,8 @@ export const useEditorStore = create<EditorState>()(
       duplicateSelected: () =>
         set((state) => {
           const selected =
-            state.selectedElementId && state.document.elements[state.selectedElementId];
+            state.selectedElementId &&
+            state.document.elements[state.selectedElementId];
 
           if (!selected || !selected.parentId) return {};
 
@@ -233,7 +235,6 @@ export const useEditorStore = create<EditorState>()(
 
       updateSelected: (patch) =>
         set((state) =>
-<<<<<<< HEAD
           mutateDocument(
             state,
             (document) => {
@@ -244,18 +245,10 @@ export const useEditorStore = create<EditorState>()(
             },
             `content-${state.selectedElementId}`,
           ),
-=======
-          mutateDocument(state, (document) => {
-            const element = state.selectedElementId && document.elements[state.selectedElementId];
-
-            if (element) Object.assign(element, patch);
-          }),
->>>>>>> fc5d160 (Improved application architecture)
         ),
 
       updateStyle: (patch) =>
         set((state) =>
-<<<<<<< HEAD
           mutateDocument(
             state,
             (document) => {
@@ -270,17 +263,6 @@ export const useEditorStore = create<EditorState>()(
             },
             `style-${state.selectedElementId}-${state.breakpoint}-${Object.keys(patch).join("-")}`,
           ),
-=======
-          mutateDocument(state, (document) => {
-            const element = state.selectedElementId && document.elements[state.selectedElementId];
-
-            if (element)
-              element.styles[state.breakpoint] = {
-                ...element.styles[state.breakpoint],
-                ...patch,
-              };
-          }),
->>>>>>> fc5d160 (Improved application architecture)
         ),
 
       undo: () =>
@@ -288,15 +270,11 @@ export const useEditorStore = create<EditorState>()(
           const previous = state.past.at(-1);
 
           if (!previous) return {};
-<<<<<<< HEAD
           const projects = state.projects.map((project) =>
             project.id === state.activeProjectId
               ? { ...project, document: previous.document }
               : project,
           );
-=======
-
->>>>>>> fc5d160 (Improved application architecture)
           return {
             ...previous,
             projects,
@@ -311,15 +289,11 @@ export const useEditorStore = create<EditorState>()(
           const next = state.future[0];
 
           if (!next) return {};
-<<<<<<< HEAD
           const projects = state.projects.map((project) =>
             project.id === state.activeProjectId
               ? { ...project, document: next.document }
               : project,
           );
-=======
-
->>>>>>> fc5d160 (Improved application architecture)
           return {
             ...next,
             projects,
@@ -332,7 +306,9 @@ export const useEditorStore = create<EditorState>()(
       setBreakpoint: (breakpoint) =>
         set({
           breakpoint,
-          viewportWidth: { desktop: 1200, tablet: 768, mobile: 390 }[breakpoint],
+          viewportWidth: { desktop: 1200, tablet: 768, mobile: 390 }[
+            breakpoint
+          ],
         }),
 
       setViewportWidth: (viewportWidth) =>
@@ -340,7 +316,8 @@ export const useEditorStore = create<EditorState>()(
 
       setZoom: (zoom) => set({ zoom: Math.min(1.25, Math.max(0.5, zoom)) }),
 
-      toggleTheme: () => set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
+      toggleTheme: () =>
+        set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
 
       createProject: () => {
         const id = crypto.randomUUID();

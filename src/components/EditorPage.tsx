@@ -24,7 +24,6 @@ const EditorPage: React.FC = () => {
   return (
     <div className="editor" data-theme={theme}>
       <EditorToolbar />
-<<<<<<< HEAD
       <EditorDragDropProvider>
         <div className="editor-body">
           <AddElementsPanel />
@@ -32,18 +31,12 @@ const EditorPage: React.FC = () => {
           <EditorInspector />
         </div>
       </EditorDragDropProvider>
-=======
-
-      <div className="editor-body">
-        <AddElementsPanel />
-        <EditorCanvas />
-        <EditorInspector />
-      </div>
-
->>>>>>> fc5d160 (Improved application architecture)
       <div className="mobile-editor-notice">
         <strong>Weblio Editor works best on desktop</strong>
-        <p>Open this project on a larger screen for the complete visual editing experience.</p>
+        <p>
+          Open this project on a larger screen for the complete visual editing
+          experience.
+        </p>
       </div>
     </div>
   );
