@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react";
 import type React from "react";
+import { getChildIds } from "@/lib";
 import { useEditorStore } from "@/store";
 
 const LayersNavigator: React.FC = () => {
@@ -14,7 +15,8 @@ const LayersNavigator: React.FC = () => {
     const parent = element.parentId
       ? document.elements[element.parentId]
       : undefined;
-    const siblingIndex = parent?.children.indexOf(elementId) ?? -1;
+    const parentChildren = getChildIds(parent);
+    const siblingIndex = parentChildren.indexOf(elementId);
 
     const moveWithinParent = (offset: number) => {
       if (!parent) return;
@@ -32,7 +34,7 @@ const LayersNavigator: React.FC = () => {
             style={{ paddingLeft: 8 + depth * 14 }}
             onClick={() => selectElement(elementId)}
           >
-            {element.children.length > 0 ? (
+            {getChildIds(element).length > 0 ? (
               <ChevronRight />
             ) : (
               <span className="layer-spacer" />
@@ -52,7 +54,7 @@ const LayersNavigator: React.FC = () => {
               <button
                 type="button"
                 onClick={() => moveWithinParent(2)}
-                disabled={siblingIndex === parent.children.length - 1}
+                disabled={siblingIndex === parentChildren.length - 1}
                 aria-label={`Move ${element.label} down`}
               >
                 <ArrowDown />
@@ -60,9 +62,11 @@ const LayersNavigator: React.FC = () => {
             </span>
           )}
         </div>
-        {element.children.length > 0 && (
+        {getChildIds(element).length > 0 && (
           <ul>
-            {element.children.map((childId) => renderLayer(childId, depth + 1))}
+            {getChildIds(element).map((childId) =>
+              renderLayer(childId, depth + 1),
+            )}
           </ul>
         )}
       </li>

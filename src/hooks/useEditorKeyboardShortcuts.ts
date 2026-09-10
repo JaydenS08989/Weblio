@@ -22,6 +22,12 @@ export const useEditorKeyboardShortcuts = () => {
       } else if (command && event.key.toLowerCase() === "d") {
         event.preventDefault();
         store.duplicateSelected();
+      } else if (command && event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        store.copySelected();
+      } else if (command && event.key.toLowerCase() === "v") {
+        event.preventDefault();
+        store.paste();
       } else if (event.key === "Backspace" || event.key === "Delete")
         store.deleteSelected();
       else if (event.key === "Escape") store.selectElement(null);

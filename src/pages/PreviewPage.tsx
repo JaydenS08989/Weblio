@@ -9,17 +9,26 @@ const PreviewPage: React.FC = () => {
   const project = useEditorStore((state) =>
     state.projects.find((candidate) => candidate.id === projectId),
   );
-  const currentDocument = useEditorStore((state) => state.document);
+  const page = project?.pages.find(
+    (candidate) => candidate.id === project.activePageId,
+  );
+  if (!project || !page)
+    return (
+      <main className="not-found-state">
+        <h1>Preview not found</h1>
+        <p>This site or page is no longer available in this workspace.</p>
+        <Link className="button primary" to="/dashboard">
+          Return to your sites
+        </Link>
+      </main>
+    );
   return (
     <div className="preview">
       <Link className="preview-return" to={`/editor/${projectId}`}>
         <ArrowLeft />
         Return to editor
       </Link>
-      <WebsiteRenderer
-        document={project?.document ?? currentDocument}
-        breakpoint="desktop"
-      />
+      <WebsiteRenderer document={page.document} breakpoint="desktop" />
     </div>
   );
 };

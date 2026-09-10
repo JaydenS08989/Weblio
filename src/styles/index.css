@@ -566,6 +566,52 @@ select:focus-visible {
   text-transform: capitalize;
 }
 
+.project-actions {
+  position: relative;
+}
+
+.project-actions summary {
+  list-style: none;
+}
+
+.project-actions summary::-webkit-details-marker {
+  display: none;
+}
+
+.project-menu {
+  position: absolute;
+  z-index: 6;
+  right: 0;
+  top: 40px;
+  width: 150px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.project-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 5px;
+  padding: 8px;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.project-menu button:hover {
+  background: var(--surface);
+}
+
+.project-menu svg {
+  width: 14px;
+}
+
 .status {
   display: inline-block;
   width: 7px;
@@ -606,6 +652,31 @@ select:focus-visible {
   font-size: 10px;
   color: var(--text-muted);
   margin-top: 3px;
+}
+
+.page-picker {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.page-picker select {
+  max-width: 130px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 28px 7px 9px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.not-found-state {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
 }
 
 .toolbar-center {
@@ -889,6 +960,21 @@ select:focus-visible {
   padding: 10px;
   border-radius: 6px;
   margin-top: 20px;
+}
+
+.field small {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.reset-override {
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 10px;
+  cursor: pointer;
 }
 
 .mobile-editor-notice {

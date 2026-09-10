@@ -3,6 +3,10 @@ export type {
   EditorElement,
   ElementStyle,
   ElementType,
+  LayoutElement,
+  LengthUnit,
+  StyleLength,
   WebsiteDocument,
+  WebsitePage,
   WebsiteProject,
 } from "./editor";

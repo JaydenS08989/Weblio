@@ -1,5 +1,5 @@
 import type React from "react";
-import { getResolvedStyle } from "@/lib";
+import { getChildIds, getResolvedStyle, normalizeUrl } from "@/lib";
 import type { Breakpoint, EditorElement, WebsiteDocument } from "@/types";
 
 interface WebsiteRendererProps {
@@ -14,12 +14,26 @@ const styleFor = (
   breakpoint: Breakpoint,
 ): React.CSSProperties => {
   const style = getResolvedStyle(element, breakpoint);
+  const { gridColumns, gridRows, ...cssStyle } = style;
+  const length = (value: typeof style.width) =>
+    value
+      ? value.unit === "auto"
+        ? "auto"
+        : `${value.value}${value.unit}`
+      : undefined;
   return {
-    ...style,
-    gridTemplateColumns: style.gridColumns
-      ? `repeat(${style.gridColumns}, minmax(0, 1fr))`
+    ...cssStyle,
+    width: length(style.width),
+    height: length(style.height),
+    minWidth: length(style.minWidth),
+    maxWidth: length(style.maxWidth),
+    minHeight: length(style.minHeight),
+    maxHeight: length(style.maxHeight),
+    gridTemplateColumns: gridColumns
+      ? `repeat(${gridColumns}, minmax(0, 1fr))`
       : undefined,
-  } as React.CSSProperties;
+    gridTemplateRows: gridRows ? `repeat(${gridRows}, auto)` : undefined,
+  };
 };
 const WebsiteRenderer: React.FC<WebsiteRendererProps> = ({
   document,
@@ -41,7 +55,7 @@ const WebsiteRenderer: React.FC<WebsiteRendererProps> = ({
           }
         : undefined,
     };
-    const children = element.children.map(renderElement);
+    const children = getChildIds(element).map(renderElement);
     if (element.type === "heading")
       return (
         <h1 key={id} {...props}>
@@ -56,7 +70,11 @@ const WebsiteRenderer: React.FC<WebsiteRendererProps> = ({
       );
     if (element.type === "button")
       return (
-        <a key={id} {...props} href={editorMode ? undefined : element.href}>
+        <a
+          key={id}
+          {...props}
+          href={editorMode ? undefined : normalizeUrl(element.href)}
+        >
           {element.content}
         </a>
       );
@@ -69,14 +87,16 @@ const WebsiteRenderer: React.FC<WebsiteRendererProps> = ({
           alt={element.alt ?? ""}
           width="1200"
           height="700"
-          loading="lazy"
+          loading={element.loading}
+          fetchPriority={element.loading === "eager" ? "high" : "auto"}
           decoding="async"
         />
       );
+    const Container = element.type === "section" ? "section" : "div";
     return (
-      <div key={id} {...props}>
+      <Container key={id} {...props}>
         {children}
-      </div>
+      </Container>
     );
   };
   return <>{renderElement(document.rootId)}</>;

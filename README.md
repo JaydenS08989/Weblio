@@ -22,6 +22,7 @@ The development server runs at `http://localhost:3000` and uses SPA history fall
 | ------------------- | --------------------------------------------- |
 | `npm run build`     | Create an optimized, hashed production bundle |
 | `npm run typecheck` | Run strict TypeScript validation              |
+| `npm test`          | Run the Vitest domain and store test suite    |
 | `npm run lint`      | Run Biome lint and formatting checks          |
 | `npm run format`    | Apply Biome formatting                        |
 

@@ -90,7 +90,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
               type="email"
               autoComplete="email"
               placeholder="you@company.com"
-              defaultValue="alex@northstar.design"
             />
           </label>
           <label className="field">
@@ -102,7 +101,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
                 mode === "sign-in" ? "current-password" : "new-password"
               }
               minLength={8}
-              defaultValue="password"
             />
           </label>
           <button
