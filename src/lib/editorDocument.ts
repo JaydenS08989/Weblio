@@ -1,4 +1,9 @@
-import type { Breakpoint, EditorElement, ElementType, WebsiteDocument } from "@/types";
+import type {
+  Breakpoint,
+  EditorElement,
+  ElementType,
+  WebsiteDocument,
+} from "@/types";
 
 const responsiveStyles = (
   desktop: EditorElement["styles"][Breakpoint],
@@ -8,7 +13,10 @@ const responsiveStyles = (
   mobile: {},
 });
 
-export const createElement = (type: ElementType, parentId: string | null): EditorElement => {
+export const createElement = (
+  type: ElementType,
+  parentId: string | null,
+): EditorElement => {
   const id = crypto.randomUUID();
 
   const defaults: Record<ElementType, Partial<EditorElement>> = {
@@ -57,7 +65,8 @@ export const createElement = (type: ElementType, parentId: string | null): Edito
 
     text: {
       label: "Text",
-      content: "Shape every detail of your website with a flexible visual canvas.",
+      content:
+        "Shape every detail of your website with a flexible visual canvas.",
       styles: responsiveStyles({
         fontSize: 17,
         color: "#5c5b57",
@@ -121,7 +130,10 @@ export const createStarterDocument = (): WebsiteDocument => {
   };
 };
 
-export const getResolvedStyle = (element: EditorElement, breakpoint: Breakpoint) => ({
+export const getResolvedStyle = (
+  element: EditorElement,
+  breakpoint: Breakpoint,
+) => ({
   ...element.styles.desktop,
   ...(breakpoint === "mobile" ? element.styles.tablet : {}),
   ...element.styles[breakpoint],

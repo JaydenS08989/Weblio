@@ -1,11 +1,20 @@
-import React, { lazy, Suspense } from "react";
+import type React from "react";
+import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAuthStore } from "@/store";
 
-const AuthPage = lazy(() => import("@/components/AuthPage"));
-const DashboardPage = lazy(() => import("@/components/DashboardPage"));
-const EditorPage = lazy(() => import("@/components/EditorPage"));
-const PreviewPage = lazy(() => import("@/components/PreviewPage"));
+const AuthPage = lazy(() =>
+  import("@/pages").then(({ AuthPage }) => ({ default: AuthPage })),
+);
+const DashboardPage = lazy(() =>
+  import("@/pages").then(({ DashboardPage }) => ({ default: DashboardPage })),
+);
+const EditorPage = lazy(() =>
+  import("@/pages").then(({ EditorPage }) => ({ default: EditorPage })),
+);
+const PreviewPage = lazy(() =>
+  import("@/pages").then(({ PreviewPage }) => ({ default: PreviewPage })),
+);
 
 const ProtectedRoute: React.FC = () =>
   useAuthStore((state) => state.isAuthenticated) ? (
@@ -15,7 +24,9 @@ const ProtectedRoute: React.FC = () =>
   );
 
 const App: React.FC = () => (
-  <Suspense fallback={<div className="route-loading">Preparing your workspace…</div>}>
+  <Suspense
+    fallback={<div className="route-loading">Preparing your workspace…</div>}
+  >
     <Routes>
       <Route path="/auth/sign-in" element={<AuthPage mode="sign-in" />} />
       <Route path="/auth/sign-up" element={<AuthPage mode="sign-up" />} />

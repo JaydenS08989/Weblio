@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react";
-import React from "react";
+import type React from "react";
 import { useEditorStore } from "@/store";
 
 const LayersNavigator: React.FC = () => {

@@ -1,14 +1,11 @@
-<<<<<<< HEAD
 import { useDroppable } from "@dnd-kit/core";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-=======
->>>>>>> fc5d160 (Improved application architecture)
-import React from "react";
-import WebsiteRenderer from "./WebsiteRenderer";
+import type React from "react";
 
-import { Monitor, Smartphone, Tablet } from "lucide-react";
 import { useEditorStore } from "@/store";
 import type { Breakpoint } from "@/types";
+
+import WebsiteRenderer from "./WebsiteRenderer";
 
 const breakpoints: Array<{
   id: Breakpoint;
@@ -31,13 +28,9 @@ const EditorCanvas: React.FC = () => {
     selectedElementId,
     selectElement,
   } = useEditorStore();
-<<<<<<< HEAD
   const { isOver, setNodeRef } = useDroppable({
     id: "editor-canvas-drop-zone",
   });
-=======
-
->>>>>>> fc5d160 (Improved application architecture)
   const resize = (event: React.PointerEvent) => {
     const startX = event.clientX;
     const startWidth = viewportWidth;
@@ -57,6 +50,9 @@ const EditorCanvas: React.FC = () => {
       ref={setNodeRef}
       className={`canvas-workspace ${isOver ? "is-drop-target" : ""}`}
       onClick={() => selectElement(null)}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") selectElement(null);
+      }}
     >
       <div className="viewport-controls">
         <div className="segmented">

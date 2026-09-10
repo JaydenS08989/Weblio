@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { getResolvedStyle } from "@/lib";
 import type { Breakpoint, EditorElement, WebsiteDocument } from "@/types";
 

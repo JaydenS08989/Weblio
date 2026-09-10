@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react";
-import React from "react";
+import type React from "react";
 import { Link, useParams } from "react-router-dom";
+import { WebsiteRenderer } from "@/components";
 import { useEditorStore } from "@/store";
-import WebsiteRenderer from "./WebsiteRenderer";
 
 const PreviewPage: React.FC = () => {
   const { projectId } = useParams();

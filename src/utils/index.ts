@@ -1,1 +1,0 @@
-export { getBrowserStorage } from "./browserStorage";

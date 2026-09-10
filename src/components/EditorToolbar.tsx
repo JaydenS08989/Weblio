@@ -1,13 +1,35 @@
-import React, { useState } from "react";
-import { ArrowLeft, Eye, Moon, Redo2, Rocket, Sun, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  Moon,
+  Redo2,
+  Rocket,
+  Sun,
+  Undo2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+import type React from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEditorStore } from "@/store";
 
 const EditorToolbar: React.FC = () => {
   const navigate = useNavigate();
-  const [publishState, setPublishState] = useState<"idle" | "publishing" | "published">("idle");
-  const { past, future, undo, redo, zoom, setZoom, theme, toggleTheme, activeProjectId } =
-    useEditorStore();
+  const [publishState, setPublishState] = useState<
+    "idle" | "publishing" | "published"
+  >("idle");
+  const {
+    past,
+    future,
+    undo,
+    redo,
+    zoom,
+    setZoom,
+    theme,
+    toggleTheme,
+    activeProjectId,
+  } = useEditorStore();
   const publish = () => {
     setPublishState("publishing");
     window.setTimeout(() => setPublishState("published"), 900);
@@ -26,7 +48,9 @@ const EditorToolbar: React.FC = () => {
       <div className="project-identity">
         <strong>Northstar Studio</strong>
         <span>
-          {publishState === "published" ? "Preview published locally" : "All changes saved locally"}
+          {publishState === "published"
+            ? "Preview published locally"
+            : "All changes saved locally"}
         </span>
       </div>
       <div className="toolbar-center">

@@ -1,5 +1,13 @@
-import React, { useState } from "react";
-import { ExternalLink, LayoutGrid, LogOut, MoreHorizontal, Plus, Search } from "lucide-react";
+import {
+  ExternalLink,
+  LayoutGrid,
+  LogOut,
+  MoreHorizontal,
+  Plus,
+  Search,
+} from "lucide-react";
+import type React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore, useEditorStore } from "@/store";
 
@@ -70,7 +78,8 @@ const DashboardPage: React.FC = () => {
             />
           </label>
           <span>
-            {visibleProjects.length} {visibleProjects.length === 1 ? "site" : "sites"}
+            {visibleProjects.length}{" "}
+            {visibleProjects.length === 1 ? "site" : "sites"}
           </span>
         </div>
         <section className="project-grid" aria-label="Your sites">
