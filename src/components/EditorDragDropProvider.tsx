@@ -8,7 +8,8 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { useEditorStore } from "@/store";
 import type { ElementType } from "@/types";
 

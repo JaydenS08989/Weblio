@@ -6,7 +6,8 @@ export const useEditorKeyboardShortcuts = () => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
 
-      if (target.matches("input, textarea, select, [contenteditable=true]")) return;
+      if (target.matches("input, textarea, select, [contenteditable=true]"))
+        return;
 
       const store = useEditorStore.getState();
 
@@ -21,7 +22,8 @@ export const useEditorKeyboardShortcuts = () => {
       } else if (command && event.key.toLowerCase() === "d") {
         event.preventDefault();
         store.duplicateSelected();
-      } else if (event.key === "Backspace" || event.key === "Delete") store.deleteSelected();
+      } else if (event.key === "Backspace" || event.key === "Delete")
+        store.deleteSelected();
       else if (event.key === "Escape") store.selectElement(null);
     };
 

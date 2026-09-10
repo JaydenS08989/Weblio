@@ -24,11 +24,10 @@ The development server runs at `http://localhost:3000` and uses SPA history fall
 | `npm run typecheck` | Run strict TypeScript validation              |
 | `npm run lint`      | Run Biome lint and formatting checks          |
 | `npm run format`    | Apply Biome formatting                        |
-| `npm test`          | Run the Vitest behavior suite                 |
 
 ## Architecture
 
-The source tree is intentionally flat. Product components live in `src/components`, application-level hooks in `src/hooks`, canonical domain types in `src/types`, pure document operations in `src/lib`, Zustand stores in `src/store`, and design-system foundations in `src/styles`. Each folder exposes a deliberate barrel API where it is consumed as a public module.
+The source tree separates route-level screens in `src/pages` from reusable UI in `src/components`. Reusable hooks live in `src/hooks`, canonical domain types in `src/types`, framework-independent browser and document operations in `src/lib`, Zustand stores in `src/store`, and design-system foundations in `src/styles`. Each applicable folder exposes a deliberate barrel API for its public modules.
 
 The editor stores a normalized, versioned `WebsiteDocument`: elements are serializable records with stable identifiers, explicit parent/child relationships, discriminated element types, and cascading desktop/tablet/mobile styles. `WebsiteRenderer` consumes that model in both the visual canvas and preview. Editor-only selection and resize chrome are optional renderer concerns and never enter persisted website content.
 
