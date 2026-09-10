@@ -1,0 +1,4 @@
+interface:
+  display_name: "Weblio Development"
+  short_description: "Apply Weblio architecture and code conventions"
+  default_prompt: "Update Weblio using its established architecture, barrel imports, formatting, and behavior-preservation rules."
