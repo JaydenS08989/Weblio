@@ -32,9 +32,9 @@ The source tree is intentionally flat. Product components live in `src/component
 
 The editor stores a normalized, versioned `WebsiteDocument`: elements are serializable records with stable identifiers, explicit parent/child relationships, discriminated element types, and cascading desktop/tablet/mobile styles. `WebsiteRenderer` consumes that model in both the visual canvas and preview. Editor-only selection and resize chrome are optional renderer concerns and never enter persisted website content.
 
-Zustand owns shared document, selection, history, viewport, theme, and project state. Local interaction state—such as the publish simulation—stays within its component. History records only document mutations and remains bounded. The canvas uses selectors where practical and pointer events for canvas resizing; keyboard commands are centralized in one hook.
+Zustand owns shared document, selection, history, viewport, theme, and project state. Local interaction state—such as the publish simulation—stays within its component. History records only document mutations, coalesces rapid inspector changes, and remains bounded. Project mutations synchronize into the locally persisted active project so preview and reopening use the same canonical document. The canvas uses selectors where practical, dnd-kit sensors for accessible element insertion, and pointer events for canvas resizing; keyboard commands are centralized in one hook.
 
-Webpack compiles React 19.2 and strict TypeScript through Babel with React Compiler enabled. Production builds use deterministic module IDs, hashed assets, runtime extraction, shared chunking, filesystem caching, and source maps. Product boundaries are ready for route-level lazy loading as each area grows.
+Webpack compiles React 19.2 and strict TypeScript through Babel with React Compiler enabled. Production builds use deterministic module IDs, hashed assets, runtime extraction, shared chunking, filesystem caching, and source maps. Authentication, dashboard, editor, and preview routes load at product boundaries so the editor does not inflate the initial authentication code path.
 
 ## Design system and accessibility
 

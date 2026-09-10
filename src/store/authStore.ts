@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { getBrowserStorage } from "@/utils";
 
 interface AuthState {
   isAuthenticated: boolean;

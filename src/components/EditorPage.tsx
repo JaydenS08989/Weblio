@@ -4,6 +4,7 @@ import { useEditorKeyboardShortcuts } from "@/hooks";
 import { useEditorStore } from "@/store";
 import AddElementsPanel from "./AddElementsPanel";
 import EditorCanvas from "./EditorCanvas";
+import EditorDragDropProvider from "./EditorDragDropProvider";
 import EditorInspector from "./EditorInspector";
 import EditorToolbar from "./EditorToolbar";
 
@@ -18,11 +19,13 @@ const EditorPage: React.FC = () => {
   return (
     <div className="editor" data-theme={theme}>
       <EditorToolbar />
-      <div className="editor-body">
-        <AddElementsPanel />
-        <EditorCanvas />
-        <EditorInspector />
-      </div>
+      <EditorDragDropProvider>
+        <div className="editor-body">
+          <AddElementsPanel />
+          <EditorCanvas />
+          <EditorInspector />
+        </div>
+      </EditorDragDropProvider>
       <div className="mobile-editor-notice">
         <strong>Weblio Editor works best on desktop</strong>
         <p>

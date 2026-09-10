@@ -1,3 +1,4 @@
+import { useDraggable } from "@dnd-kit/core";
 import {
   Box,
   Grid2X2,
@@ -11,6 +12,8 @@ import {
 import React from "react";
 import { useEditorStore } from "@/store";
 import type { ElementType } from "@/types";
+import type { AddElementDragData } from "./EditorDragDropProvider";
+import LayersNavigator from "./LayersNavigator";
 
 const options: Array<{
   type: ElementType;
@@ -25,6 +28,44 @@ const options: Array<{
   { type: "button", label: "Button", icon: <MousePointerClick /> },
   { type: "image", label: "Image", icon: <Image /> },
 ];
+interface AddElementButtonProps {
+  elementType: ElementType;
+  icon: React.ReactNode;
+  label: string;
+  onAdd: (elementType: ElementType) => void;
+}
+
+const AddElementButton: React.FC<AddElementButtonProps> = ({
+  elementType,
+  icon,
+  label,
+  onAdd,
+}) => {
+  const dragData: AddElementDragData = {
+    kind: "new-element",
+    elementType,
+    label,
+  };
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `add-${elementType}`,
+    data: dragData,
+  });
+
+  return (
+    <button
+      type="button"
+      ref={setNodeRef}
+      className={isDragging ? "is-dragging" : undefined}
+      onClick={() => onAdd(elementType)}
+      {...listeners}
+      {...attributes}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+};
+
 const AddElementsPanel: React.FC = () => {
   const addElement = useEditorStore((state) => state.addElement);
   return (
@@ -41,20 +82,16 @@ const AddElementsPanel: React.FC = () => {
       </p>
       <div className="element-grid">
         {options.map((option) => (
-          <button
-            type="button"
+          <AddElementButton
             key={option.type}
-            onClick={() => addElement(option.type)}
-          >
-            {option.icon}
-            <span>{option.label}</span>
-          </button>
+            elementType={option.type}
+            icon={option.icon}
+            label={option.label}
+            onAdd={addElement}
+          />
         ))}
       </div>
-      <div className="layers">
-        <span className="eyebrow">Navigator</span>
-        <p>Page · Main section</p>
-      </div>
+      <LayersNavigator />
     </aside>
   );
 };

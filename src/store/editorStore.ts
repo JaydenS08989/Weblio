@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { createElement, createStarterDocument } from "@/lib";
 import type {
   Breakpoint,
@@ -9,6 +9,7 @@ import type {
   WebsiteDocument,
   WebsiteProject,
 } from "@/types";
+import { getBrowserStorage } from "@/utils";
 
 interface EditorSnapshot {
   document: WebsiteDocument;
@@ -25,8 +26,14 @@ interface EditorState {
   theme: "light" | "dark";
   past: EditorSnapshot[];
   future: EditorSnapshot[];
+  lastHistoryMutation: { key: string; timestamp: number } | null;
   selectElement: (id: string | null) => void;
   addElement: (type: ElementType, parentId?: string) => void;
+  moveElement: (
+    elementId: string,
+    parentId: string,
+    insertionIndex?: number,
+  ) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
   updateSelected: (
@@ -58,13 +65,34 @@ const snapshot = (state: EditorState): EditorSnapshot => ({
 const mutateDocument = (
   state: EditorState,
   mutation: (document: WebsiteDocument) => void,
+  coalescingKey?: string,
 ): Partial<EditorState> => {
   const document = structuredClone(state.document);
   mutation(document);
+  const updatedAt = new Date().toISOString();
+  const projects = state.projects.map((project) =>
+    project.id === state.activeProjectId
+      ? { ...project, document, updatedAt }
+      : project,
+  );
+
+  const timestamp = Date.now();
+  const shouldCoalesce = Boolean(
+    coalescingKey &&
+      state.lastHistoryMutation?.key === coalescingKey &&
+      timestamp - state.lastHistoryMutation.timestamp < 650,
+  );
+
   return {
     document,
-    past: [...state.past, snapshot(state)].slice(-50),
+    projects,
+    past: shouldCoalesce
+      ? state.past
+      : [...state.past, snapshot(state)].slice(-50),
     future: [],
+    lastHistoryMutation: coalescingKey
+      ? { key: coalescingKey, timestamp }
+      : null,
   };
 };
 
@@ -81,10 +109,12 @@ export const useEditorStore = create<EditorState>()(
       theme: "light",
       past: [],
       future: [],
+      lastHistoryMutation: null,
       selectElement: (selectedElementId) => set({ selectedElementId }),
       addElement: (type, parentId) =>
-        set((state) =>
-          mutateDocument(state, (document) => {
+        set((state) => {
+          let selectedElementId = state.selectedElementId;
+          const mutation = mutateDocument(state, (document) => {
             const parent =
               document.elements[
                 parentId ?? state.selectedElementId ?? document.rootId
@@ -96,9 +126,48 @@ export const useEditorStore = create<EditorState>()(
             const element = createElement(type, safeParent.id);
             document.elements[element.id] = element;
             safeParent.children.push(element.id);
-            state.selectedElementId = element.id;
-          }),
-        ),
+            selectedElementId = element.id;
+          });
+
+          return { ...mutation, selectedElementId };
+        }),
+      moveElement: (elementId, parentId, insertionIndex) =>
+        set((state) => {
+          const element = state.document.elements[elementId];
+          const nextParent = state.document.elements[parentId];
+          if (!element || !nextParent || element.id === state.document.rootId)
+            return {};
+
+          const descendantIds = new Set<string>();
+          const collectDescendants = (id: string) => {
+            state.document.elements[id]?.children.forEach((childId) => {
+              descendantIds.add(childId);
+              collectDescendants(childId);
+            });
+          };
+          collectDescendants(elementId);
+          if (descendantIds.has(parentId)) return {};
+
+          return mutateDocument(state, (document) => {
+            const previousParent =
+              element.parentId && document.elements[element.parentId];
+            if (previousParent) {
+              previousParent.children = previousParent.children.filter(
+                (childId) => childId !== elementId,
+              );
+            }
+
+            const parent = document.elements[parentId];
+            const movedElement = document.elements[elementId];
+            if (!parent || !movedElement) return;
+            movedElement.parentId = parentId;
+            const targetIndex = Math.min(
+              Math.max(insertionIndex ?? parent.children.length, 0),
+              parent.children.length,
+            );
+            parent.children.splice(targetIndex, 0, elementId);
+          });
+        }),
       deleteSelected: () =>
         set((state) => {
           const selected =
@@ -142,44 +211,66 @@ export const useEditorStore = create<EditorState>()(
         }),
       updateSelected: (patch) =>
         set((state) =>
-          mutateDocument(state, (document) => {
-            const element =
-              state.selectedElementId &&
-              document.elements[state.selectedElementId];
-            if (element) Object.assign(element, patch);
-          }),
+          mutateDocument(
+            state,
+            (document) => {
+              const element =
+                state.selectedElementId &&
+                document.elements[state.selectedElementId];
+              if (element) Object.assign(element, patch);
+            },
+            `content-${state.selectedElementId}`,
+          ),
         ),
       updateStyle: (patch) =>
         set((state) =>
-          mutateDocument(state, (document) => {
-            const element =
-              state.selectedElementId &&
-              document.elements[state.selectedElementId];
-            if (element)
-              element.styles[state.breakpoint] = {
-                ...element.styles[state.breakpoint],
-                ...patch,
-              };
-          }),
+          mutateDocument(
+            state,
+            (document) => {
+              const element =
+                state.selectedElementId &&
+                document.elements[state.selectedElementId];
+              if (element)
+                element.styles[state.breakpoint] = {
+                  ...element.styles[state.breakpoint],
+                  ...patch,
+                };
+            },
+            `style-${state.selectedElementId}-${state.breakpoint}-${Object.keys(patch).join("-")}`,
+          ),
         ),
       undo: () =>
         set((state) => {
           const previous = state.past.at(-1);
           if (!previous) return {};
+          const projects = state.projects.map((project) =>
+            project.id === state.activeProjectId
+              ? { ...project, document: previous.document }
+              : project,
+          );
           return {
             ...previous,
+            projects,
             past: state.past.slice(0, -1),
             future: [snapshot(state), ...state.future],
+            lastHistoryMutation: null,
           };
         }),
       redo: () =>
         set((state) => {
           const next = state.future[0];
           if (!next) return {};
+          const projects = state.projects.map((project) =>
+            project.id === state.activeProjectId
+              ? { ...project, document: next.document }
+              : project,
+          );
           return {
             ...next,
+            projects,
             past: [...state.past, snapshot(state)],
             future: state.future.slice(1),
+            lastHistoryMutation: null,
           };
         }),
       setBreakpoint: (breakpoint) =>
@@ -226,6 +317,7 @@ export const useEditorStore = create<EditorState>()(
     }),
     {
       name: "weblio-workspace-v1",
+      storage: createJSONStorage(getBrowserStorage),
       partialize: (state) => ({ projects: state.projects, theme: state.theme }),
     },
   ),

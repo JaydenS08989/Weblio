@@ -1,7 +1,11 @@
-import React, { Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { AuthPage, DashboardPage, EditorPage, PreviewPage } from "@/components";
 import { useAuthStore } from "@/store";
+
+const AuthPage = lazy(() => import("@/components/AuthPage"));
+const DashboardPage = lazy(() => import("@/components/DashboardPage"));
+const EditorPage = lazy(() => import("@/components/EditorPage"));
+const PreviewPage = lazy(() => import("@/components/PreviewPage"));
 
 const ProtectedRoute: React.FC = () =>
   useAuthStore((state) => state.isAuthenticated) ? (

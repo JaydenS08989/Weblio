@@ -1,3 +1,4 @@
+import { useDroppable } from "@dnd-kit/core";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
 import React from "react";
 import { useEditorStore } from "@/store";
@@ -24,6 +25,9 @@ const EditorCanvas: React.FC = () => {
     selectedElementId,
     selectElement,
   } = useEditorStore();
+  const { isOver, setNodeRef } = useDroppable({
+    id: "editor-canvas-drop-zone",
+  });
   const resize = (event: React.PointerEvent) => {
     const startX = event.clientX;
     const startWidth = viewportWidth;
@@ -38,7 +42,11 @@ const EditorCanvas: React.FC = () => {
     window.addEventListener("pointerup", stop);
   };
   return (
-    <main className="canvas-workspace" onClick={() => selectElement(null)}>
+    <main
+      ref={setNodeRef}
+      className={`canvas-workspace ${isOver ? "is-drop-target" : ""}`}
+      onClick={() => selectElement(null)}
+    >
       <div className="viewport-controls">
         <div className="segmented">
           {breakpoints.map((item) => (
@@ -59,6 +67,9 @@ const EditorCanvas: React.FC = () => {
         <span>{Math.round(viewportWidth)} px</span>
       </div>
       <div className="canvas-stage">
+        {isOver && (
+          <div className="canvas-drop-guidance">Drop to add element</div>
+        )}
         <div
           className="canvas-scaler"
           style={{ width: viewportWidth, transform: `scale(${zoom})` }}
